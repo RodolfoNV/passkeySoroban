@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { isFreighterAvailable, getFreighterPublicKey, openFreighterInstallPage } from '@/lib/wallets';
 
 interface PasskeyData {
   credentialId: string;
@@ -18,6 +19,17 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ passkeyData, onLogout, onAuthenticate }) => {
   const [copied, setCopied] = useState<string | null>(null);
+  const [walletPk, setWalletPk] = useState<string | null>(null);
+  const [walletAvailable, setWalletAvailable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    try {
+      const avail = isFreighterAvailable();
+      setWalletAvailable(avail);
+    } catch (e) {
+      setWalletAvailable(false);
+    }
+  }, []);
 
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -45,6 +57,39 @@ const Dashboard: React.FC<DashboardProps> = ({ passkeyData, onLogout, onAuthenti
             <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 backdrop-blur-sm border border-white/20">
               <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
               <span className="text-blue-200 text-sm font-medium">Conectado</span>
+            </div>
+            {/* Freighter connect button */}
+            <div>
+              {walletAvailable ? (
+                walletPk ? (
+                  <div className="text-sm text-blue-200">
+                    Wallet: <code className="text-yellow-300">{shortenString(walletPk, 18)}</code>
+                  </div>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const pk = await getFreighterPublicKey();
+                        setWalletPk(pk || null);
+                      } catch (err) {
+                        // If freighter exists but call failed, show install/help
+                        console.warn('Freighter connect error', err);
+                        alert('No se pudo conectar con Freighter. Revisa la extensión o instala Freighter.');
+                      }
+                    }}
+                    className="px-3 py-1 bg-white/5 text-blue-200 rounded-md border border-white/10 hover:bg-white/10"
+                  >
+                    Conectar Freighter
+                  </button>
+                )
+              ) : (
+                <button
+                  onClick={() => openFreighterInstallPage()}
+                  className="px-3 py-1 bg-white/5 text-blue-200 rounded-md border border-white/10 hover:bg-white/10"
+                >
+                  Instalar Freighter
+                </button>
+              )}
             </div>
             <button
               onClick={onLogout}

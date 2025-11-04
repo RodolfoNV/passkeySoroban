@@ -10,6 +10,7 @@ import {
   StrKey,
 } from '@stellar/stellar-sdk';
 import base64url from 'base64url';
+import { signXdrWithFreighter } from '@/lib/wallets';
 
 // Configuración de red
 export const getRpcUrl = () => {
@@ -30,6 +31,32 @@ export const getContractAddress = () => {
 
 // Cliente RPC
 export const rpc = new SorobanRpc.Server(getRpcUrl());
+
+/**
+ * Try to sign a transaction XDR with Freighter and submit it to the Soroban RPC.
+ * Returns an object with success and transaction hash or an error message.
+ */
+export async function signAndSubmitXdr(xdr: string): Promise<{ success: boolean; hash?: string; error?: string }> {
+  try {
+    // Try Freighter signing first
+    try {
+      const signed = await signXdrWithFreighter(xdr, getNetworkPassphrase() === 'Test SDF Network ; September 2015' ? 'TESTNET' : 'PUBLIC');
+      // If the returned value looks like an XDR, try submitting it via RPC
+      try {
+  const resp = await rpc.sendTransaction(signed as any);
+        return { success: true, hash: resp.hash };
+      } catch (sendErr: any) {
+        // If RPC send fails, at least return the signed XDR so the caller can inspect
+        return { success: false, error: `Failed to submit signed XDR: ${sendErr?.message || sendErr}` };
+      }
+    } catch (freighterErr: any) {
+      // Freighter not available or failed -> indicate fallback required
+      return { success: false, error: `Freighter signing failed or not available: ${freighterErr?.message || freighterErr}` };
+    }
+  } catch (err: any) {
+    return { success: false, error: err?.message || String(err) };
+  }
+}
 
 /**
  * Despliega una nueva cuenta WebAuthn usando el contrato directo (sin factory por ahora)
