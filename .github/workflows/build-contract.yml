@@ -1,0 +1,41 @@
+name: Build Soroban Contract
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    name: Build contract and upload WASM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt
+
+      - name: Add wasm target
+        run: |
+          rustup target add wasm32-unknown-unknown
+
+      - name: Build Soroban contract (release)
+        working-directory: contract
+        run: |
+          cargo build --target wasm32-unknown-unknown --release
+
+      - name: List built WASM
+        run: |
+          ls -lh contract/target/wasm32-unknown-unknown/release || true
+
+      - name: Upload WASM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: passkey-contract-wasm
+          path: contract/target/wasm32-unknown-unknown/release/*.wasm

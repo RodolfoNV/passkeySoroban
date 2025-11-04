@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Nueva paleta: eléctrico/neón */
+  --background: linear-gradient(180deg, #050816 0%, #071034 100%);
+  --foreground: #e6f7ff;
+  --primary-500: #7c3aed; /* violet */
+  --primary-600: #4f46e5;
+  --accent-400: #00d4ff; /* cyan neon */
+  --accent-600: #00bcd4;
+  --muted-300: #94a3b8;
+  --glass-bg: rgba(255,255,255,0.03);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: linear-gradient(180deg, #010417 0%, #06102b 100%);
+    --foreground: #e6f7fb;
+    --primary-500: #7c3aed;
+    --primary-600: #4f46e5;
+    --accent-400: #00d4ff;
+    --glass-bg: rgba(255,255,255,0.03);
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: linear-gradient(180deg, var(--background) 0%, rgba(246,251,255,0.8) 100%);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Custom animations for passkey interactions */
+@keyframes fingerprint-scan {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.fingerprint-scan {
+  animation: fingerprint-scan 2s ease-in-out infinite;
+}
+
+/* Glassmorphism effect */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px) saturate(120%);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 30px rgba(2,6,23,0.25);
+}
+
+@media (prefers-color-scheme: dark) {
+  .glass {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
