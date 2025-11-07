@@ -22,58 +22,50 @@ export function PasskeyAuth({ onLogin }: PasskeyAuthProps) {
       setStatus("Llave local detectada. Puedes acceder sin autenticación externa.");
     }
   }, []);
-  const { isSupported, createPasskey, authenticate, isLoading, error } =
-    usePasskey();
+  const { isSupported, createPasskey, authenticate, isLoading, error } = usePasskey();
 
   const handleRegister = async () => {
     if (!username.trim()) {
-      setStatus("Please enter a username");
+      setStatus("Por favor ingresa un usuario");
       return;
     }
-
-    setStatus("Creating passkey...");
+    setStatus("Creando passkey...");
     const result = await createPasskey(username);
-
     if (result.success) {
-      setStatus(
-        `✅ Passkey created successfully! Credential ID: ${result.credentialId?.slice(0, 20)}...`
-      );
-      // Guardar la llave localmente tras registro exitoso
       saveLocalKey(username);
       setLocalKey(username);
-      setStatus("Llave guardada localmente. Puedes acceder sin celular ni autenticación externa.");
+      setStatus("¡Listo! Acceso biométrico activado.");
     } else {
-      setStatus(`❌ Failed: ${result.error}`);
+      setStatus(`Error: ${result.error}`);
     }
   };
 
   const handleAuthenticate = async () => {
-    setStatus("Authenticating...");
+    setStatus("Autenticando...");
     const result = await authenticate();
-
     if (result.success) {
-      setStatus(`✅ Authenticated successfully! User: ${result.userHandle}`);
+      setStatus("");
       if (onLogin) {
         onLogin(result.userHandle || localKey || "");
       }
     } else {
-      setStatus(`❌ Failed: ${result.error}`);
+      setStatus(`Error: ${result.error}`);
     }
   };
 
   if (!isSupported) {
     return (
-      <div className="glass rounded-2xl p-8">
+      <div className="rounded-2xl p-8 bg-white/10 shadow-xl flex flex-col items-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
-            Passkeys No Soportados
+          <div className="text-6xl mb-4">🔒</div>
+          <h2 className="text-2xl font-bold mb-4 text-blue-900">
+            Passkeys no soportados
           </h2>
-          <p className="leading-relaxed" style={{ color: 'var(--muted-300)' }}>
-            Tu navegador no soporta WebAuthn/Passkeys. Prueba con Chrome, Safari o Edge modernos.
+          <p className="leading-relaxed text-blue-700">
+            Tu navegador no soporta Passkeys/WebAuthn.<br/>Prueba con Chrome, Safari o Edge modernos.
           </p>
-          <p className="text-sm mt-4" style={{ color: 'var(--muted-300)' }}>
-            Asegúrate de usar HTTPS en producción.
+          <p className="text-sm mt-4 text-blue-400">
+            Usa HTTPS para máxima seguridad.
           </p>
         </div>
       </div>
@@ -81,129 +73,42 @@ export function PasskeyAuth({ onLogin }: PasskeyAuthProps) {
   }
 
   return (
-    <div className="glass rounded-2xl p-8 space-y-6">
-      {/* Acceso rápido con llave local */}
-      {localKey && (
-        <div className="mt-4 p-2 bg-blue-100 text-blue-800 rounded">
-          <strong>Acceso rápido:</strong> Usando llave local <span className="font-mono">{localKey}</span>
-        </div>
-      )}
-      <div className="text-center mb-6">
-        <h2 className="text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
-          Prueba
-        </h2>
-        <p style={{ color: 'var(--muted-300)' }}>
-          Crea o autentícate con un passkey
-        </p>
-      </div>
-
-      {/* Username Input */}
-      <div>
-        <label
-          htmlFor="username"
-          className="block text-sm font-medium mb-2"
-          style={{ color: 'var(--muted-300)' }}
-        >
-          Usuario
-        </label>
+    <div className="rounded-2xl p-8 max-w-md mx-auto mt-8 shadow-2xl bg-black/80 backdrop-blur-md border border-green-700 flex flex-col items-center">
+      <div className="flex flex-col items-center w-full">
+        <div className="text-5xl mb-2 text-green-400">🔑</div>
+        <h2 className="text-2xl font-bold mb-2 text-green-300">Bienvenido</h2>
+        <p className="text-green-200 mb-6 text-center">Accede con tu usuario y activa tu passkey biométrica.<br/>Rápido, seguro y sin contraseñas.</p>
         <input
-          id="username"
           type="text"
+          className="w-full px-4 py-2 rounded-lg border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 mb-4 bg-black/70 text-green-200 placeholder-green-400"
+          placeholder="Usuario"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Enter your username"
-          className="w-full px-4 py-3 rounded-lg border bg-[rgba(255,255,255,0.02)] text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent transition-all"
-          disabled={isLoading}
+          disabled={!!localKey}
         />
-      </div>
-
-      {/* Botón de registro siempre visible */}
-      <div className="flex flex-col gap-4">
-        <button
-          onClick={handleRegister}
-          disabled={isLoading || !username.trim()}
-          className="px-6 py-4 text-black font-semibold rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(90deg, var(--primary-500), var(--accent-400))' }}
-        >
-          {isLoading ? (
-            <>
-              <Spinner />
-              <span>Processing...</span>
-            </>
-          ) : (
-            <>
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              <span>Crear Passkey</span>
-            </>
+        <div className="flex flex-col gap-3 w-full">
+          {!localKey && (
+            <button
+              className="w-full py-2 rounded-lg bg-gradient-to-r from-green-600 to-blue-800 text-white font-bold shadow-md hover:from-green-700 hover:to-blue-900 transition-all"
+              onClick={handleRegister}
+              disabled={isLoading}
+            >
+              {isLoading ? "Creando..." : "Crear Passkey"}
+            </button>
           )}
-        </button>
-        {/* Botón de login solo si hay llave local */}
-        {localKey && (
           <button
+            className="w-full py-2 rounded-lg bg-gradient-to-r from-blue-900 to-green-600 text-white font-bold shadow-md hover:from-blue-800 hover:to-green-700 transition-all"
             onClick={handleAuthenticate}
-            disabled={isLoading}
-            className="px-6 py-4 text-white font-semibold rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(90deg, rgba(80,140,255,0.15), rgba(0,212,255,0.15))' }}
+            disabled={isLoading || (!localKey && !username)}
           >
-            {isLoading ? (
-              <>
-                <Spinner />
-                <span>Processing...</span>
-              </>
-            ) : (
-              <>
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                  />
-                </svg>
-                <span>Login</span>
-              </>
-            )}
+            {isLoading ? "Autenticando..." : localKey ? "Entrar con Passkey" : "Entrar"}
           </button>
-        )}
-      </div>
-
-      {/* Status Display */}
-      {(status || error) && (
-        <div
-          className={`p-4 rounded-lg ${
-            error
-              ? "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800"
-              : status.includes("✅")
-                  ? "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800"
-                  : "bg-[rgba(0,0,0,0.04)] text-[var(--foreground)] border border-[rgba(255,255,255,0.03)]"
-          }`}
-        >
-          <p className="text-sm font-medium break-words">{error || status}</p>
         </div>
-      )}
-
-      {/* Browser Info */}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-          🔒 Your biometric data never leaves your device
-        </p>
+        {status && (
+          <div className="mt-4 text-center text-green-400 font-medium animate-pulse">
+            {status}
+          </div>
+        )}
       </div>
     </div>
   );

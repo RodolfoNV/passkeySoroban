@@ -43,7 +43,7 @@ const Dashboard: React.FC<DashboardProps> = ({ passkeyData, onLogout, onAuthenti
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-blue-950 via-blue-800 to-blue-500 text-white overflow-hidden">
+  <div className="relative min-h-screen bg-gradient-to-br from-black via-blue-900 to-green-900 text-white overflow-hidden">
       {/* Header */}
       <nav className="relative z-10 px-6 pt-6">
         <div className="mx-auto max-w-6xl flex items-center justify-between">
