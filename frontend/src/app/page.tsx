@@ -1,5 +1,6 @@
-import RapidLoanLanding from '../components/LandingPage';
+import React from 'react';
+import Dashboard from '../components/Dashboard';
 
-export default function Home() {
-  return <RapidLoanLanding />;
+export default function Page() {
+  return <Dashboard />;
 }

@@ -1,24 +1,8 @@
-// Base64 URL encoding utilities (adapted from kalepail/soroban-passkey)
-//
-// Copyright (c) 2024 Tyler van der Hoeven
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 
 use soroban_sdk::{Bytes, Env};
 
 const ALPHABET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
-/// Decode base64url bytes in Soroban environment
 pub fn decode(env: &Env, base64_url: &Bytes) -> Result<Bytes, &'static str> {
     let mut output = Bytes::new(env);
     let input = base64_url.to_vec();
@@ -27,11 +11,11 @@ pub fn decode(env: &Env, base64_url: &Bytes) -> Result<Bytes, &'static str> {
         return Ok(output);
     }
 
-    // Remove padding
+    
     let input_len = input.len();
     let mut actual_len = input_len;
     
-    // Base64url doesn't use padding, but handle it if present
+    
     while actual_len > 0 && input.get(actual_len - 1) == Some(&(b'=' as u32)) {
         actual_len -= 1;
     }

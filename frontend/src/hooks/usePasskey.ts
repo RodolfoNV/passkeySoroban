@@ -1,114 +1,66 @@
-"use client";
+import { useState } from 'react';
 
-import { useState, useEffect, useCallback } from "react";
-import {
-  startRegistration,
-  startAuthentication,
-  browserSupportsWebAuthn,
-} from "@/lib/webauthn";
+type UsePasskeyReturn = {
+  isRegistered: boolean;
+  lastError?: string | null;
+  registerPasskey: () => Promise<void>;
+  signIn: () => Promise<void>;
+};
 
-export interface PasskeyResult {
-  success: boolean;
-  credentialId?: string;
-  publicKey?: Uint8Array;
-  userHandle?: string;
-  signature?: Uint8Array;
-  error?: string;
-}
+export default function usePasskey(): UsePasskeyReturn {
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
 
-export function usePasskey() {
-  const [isSupported, setIsSupported] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setIsSupported(browserSupportsWebAuthn());
-  }, []);
-
-  const createPasskey = useCallback(
-    async (username: string): Promise<PasskeyResult> => {
-      if (!isSupported) {
-        return {
-          success: false,
-          error: "WebAuthn is not supported in this browser",
-        };
-      }
-
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const result = await startRegistration(username);
-
-        if (!result.success) {
-          setError(result.error || "Failed to create passkey");
-          return result;
-        }
-
-        console.log("✅ Passkey created:", {
-          credentialId: result.credentialId,
-          publicKeyLength: result.publicKey?.length,
-        });
-
-        return result;
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Unknown error occurred";
-        setError(errorMessage);
-        return { success: false, error: errorMessage };
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [isSupported]
-  );
-
-  const authenticate = useCallback(async (): Promise<PasskeyResult> => {
-    if (!isSupported) {
-      return {
-        success: false,
-        error: "WebAuthn is not supported in this browser",
-      };
+  async function registerPasskey() {
+    setLastError(null);
+    if (!('credentials' in navigator) || !(navigator as any).credentials.create) {
+      throw new Error('WebAuthn no soportado en este navegador');
     }
 
-    setIsLoading(true);
-    setError(null);
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+
+    const publicKey: PublicKeyCredentialCreationOptions = {
+      challenge: challenge.buffer,
+      rp: { name: 'Passkey Soroban Demo' },
+      user: {
+        id: Uint8Array.from(String(Date.now()), c => c.charCodeAt(0)),
+        name: 'user@example.com',
+        displayName: 'Demo User'
+      },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+      timeout: 60000,
+      attestation: 'none'
+    };
 
     try {
-      const result = await startAuthentication();
-
-      if (!result.success) {
-        setError(result.error || "Authentication failed");
-        return result;
-      }
-
-      console.log("✅ Authenticated:", {
-        credentialId: result.credentialId,
-        userHandle: result.userHandle,
-        signatureLength: result.signature?.length,
-      });
-
-      return result;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Unknown error occurred";
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setIsLoading(false);
+      const cred = await (navigator as any).credentials.create({ publicKey });
+      console.log('credential', cred);
+      setIsRegistered(true);
+    } catch (err: any) {
+      setLastError(err?.message ?? String(err));
+      throw err;
     }
-  }, [isSupported]);
+  }
 
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
+  async function signIn() {
+    setLastError(null);
+    if (!('credentials' in navigator) || !(navigator as any).credentials.get) {
+      throw new Error('WebAuthn no soportado en este navegador');
+    }
 
-  return {
-    isSupported,
-    isLoading,
-    error,
-    createPasskey,
-    authenticate,
-    clearError,
-  };
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const opts: PublicKeyCredentialRequestOptions = { challenge: challenge.buffer, timeout: 60000, userVerification: 'required' };
+
+    try {
+      const assertion = await (navigator as any).credentials.get({ publicKey: opts });
+      console.log('assertion', assertion);
+      return;
+    } catch (err: any) {
+      setLastError(err?.message ?? String(err));
+      throw err;
+    }
+  }
+
+  return { isRegistered, lastError, registerPasskey, signIn };
 }
