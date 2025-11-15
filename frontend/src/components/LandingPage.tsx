@@ -1,73 +1,109 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+
+type Feature = {
+  icon: string;
+  title: string;
+  description: string;
+};
+
+type User = {
+  id: string;
+  name: string;
+  username: string;
+  creditScore: number;
+  walletAddress: string;
+  balance: string;
+  currency: string;
+};
+
+const FEATURES: Feature[] = [
+  {
+    icon: '🏍️',
+    title: 'Préstamos para Vehículos',
+    description: 'Financia tu moto, bicicleta eléctrica o equipo de reparto'
+  },
+  {
+    icon: '📱',
+    title: 'Tecnología Móvil',
+    description: 'Adquiere smartphones, power banks y accesorios esenciales'
+  },
+  {
+    icon: '⚡',
+    title: 'Aprobación Inmediata',
+    description: 'Respuesta en minutos con tecnología blockchain Stellar'
+  },
+  {
+    icon: '🛡️',
+    title: 'Totalmente Seguro',
+    description: 'Tus datos protegidos con passkeys y smart contracts'
+  }
+];
+
+function randomStellarAddress(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  // Generate a pseudo-random address starting with 'G' of length 56
+  return 'G' + Array.from({ length: 55 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
 
 const RapidLoanLanding: React.FC = () => {
   const [currentFeature, setCurrentFeature] = useState<number>(0);
   const [scrolled, setScrolled] = useState<boolean>(false);
-  const [showAuth, setShowAuth] = useState(false);
-  const [user, setUser] = useState<any>(null);
-
-  const features = [
-    {
-      icon: '🏍️',
-      title: "Préstamos para Vehículos",
-      description: "Financia tu moto, bicicleta eléctrica o equipo de reparto"
-    },
-    {
-      icon: '📱',
-      title: "Tecnología Móvil", 
-      description: "Adquiere smartphones, power banks y accesorios esenciales"
-    },
-    {
-      icon: '⚡',
-      title: "Aprobación Inmediata",
-      description: "Respuesta en minutos con tecnología blockchain Stellar"
-    },
-    {
-      icon: '🛡️',
-      title: "Totalmente Seguro",
-      description: "Tus datos protegidos con passkeys y smart contracts"
-    }
-  ];
-
-  const benefits = [
-    "Sin papeleos complicados",
-    "Tasas competitivas", 
-    "Plazos flexibles",
-    "Desembolsos rápidos",
-    "Soporte 24/7",
-    "Sin comisiones ocultas"
-  ];
+  const [showAuth, setShowAuth] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('rapidloan_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    // Hydration-safe localStorage read
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('rapidloan_user');
+      if (saved) {
+        try {
+          setUser(JSON.parse(saved) as User);
+        } catch {
+          localStorage.removeItem('rapidloan_user');
+        }
+      }
     }
 
-    const handleScroll = () => setScrolled(window.scrollY > 100);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => {
+      if (typeof window !== 'undefined') {
+        setScrolled(window.scrollY > 100);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('scroll', onScroll);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('scroll', onScroll);
+      }
+    };
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentFeature((prev) => (prev + 1) % features.length);
+    const id = setInterval(() => {
+      setCurrentFeature((p) => (p + 1) % FEATURES.length);
     }, 4000);
-    return () => clearInterval(interval);
-  }, [features.length]);
+    return () => clearInterval(id);
+  }, []);
 
-  const handleLogin = (userData: any) => {
+  const handleLogin = (userData: User) => {
     setUser(userData);
-    localStorage.setItem('rapidloan_user', JSON.stringify(userData));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('rapidloan_user', JSON.stringify(userData));
+    }
     setShowAuth(false);
   };
 
   const handleLogout = () => {
     setUser(null);
-    localStorage.removeItem('rapidloan_user');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('rapidloan_user');
+    }
   };
 
+  // AUTH UI
   if (showAuth) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center p-4">
@@ -77,27 +113,28 @@ const RapidLoanLanding: React.FC = () => {
             <h2 className="text-3xl font-bold text-white mb-2">Acceder</h2>
             <p className="text-gray-400">Usa tu passkey seguro</p>
           </div>
-          
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            handleLogin({
-              id: '1',
-              name: 'Usuario Demo',
-              username: 'demo',
-              creditScore: 750,
-              walletAddress: 'G' + Array(56).fill(0).map(() => 
-                'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]
-              ).join(''),
-              balance: '1,250.50',
-              currency: 'XLM'
-            });
-          }} className="space-y-6">
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const demoUser: User = {
+                id: '1',
+                name: 'Usuario Demo',
+                username: 'demo',
+                creditScore: 750,
+                walletAddress: randomStellarAddress(),
+                balance: '1,250.50',
+                currency: 'XLM'
+              };
+              handleLogin(demoUser);
+            }}
+            className="space-y-6"
+          >
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Nombre de Usuario
-              </label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Nombre de Usuario</label>
               <input
                 type="text"
+                name="username"
                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:border-cyan-400 focus:outline-none transition-colors"
                 placeholder="Tu nombre de usuario"
               />
@@ -116,11 +153,8 @@ const RapidLoanLanding: React.FC = () => {
               💡 <strong>Demo:</strong> Cualquier usuario funciona
             </p>
           </div>
-          
-          <button
-            onClick={() => setShowAuth(false)}
-            className="w-full text-gray-400 hover:text-white transition-colors mt-4"
-          >
+
+          <button onClick={() => setShowAuth(false)} className="w-full text-gray-400 hover:text-white transition-colors mt-4">
             ← Volver al inicio
           </button>
         </div>
@@ -128,6 +162,7 @@ const RapidLoanLanding: React.FC = () => {
     );
   }
 
+  // DASHBOARD WHEN LOGGED
   if (user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
@@ -135,16 +170,13 @@ const RapidLoanLanding: React.FC = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-4">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-lg"></div>
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-lg" />
                 <span className="text-xl font-bold text-white">RapidLoan</span>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 <span className="text-white">Hola, {user.name}</span>
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
+                <button onClick={handleLogout} className="text-gray-400 hover:text-white transition-colors">
                   Salir
                 </button>
               </div>
@@ -154,9 +186,7 @@ const RapidLoanLanding: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">
-              ¡Bienvenido, {user.name}! 🎉
-            </h1>
+            <h1 className="text-3xl font-bold text-white mb-2">¡Bienvenido, {user.name}! 🎉</h1>
             <p className="text-gray-400">Tu wallet Stellar está lista</p>
           </div>
 
@@ -165,13 +195,13 @@ const RapidLoanLanding: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <p className="text-gray-400 text-sm">Dirección:</p>
-                <code className="text-white bg-black/30 px-3 py-2 rounded-lg text-sm font-mono">
-                  {user.walletAddress}
-                </code>
+                <code className="text-white bg-black/30 px-3 py-2 rounded-lg text-sm font-mono">{user.walletAddress}</code>
               </div>
               <div>
                 <p className="text-gray-400 text-sm">Balance:</p>
-                <p className="text-2xl font-bold text-white">{user.balance} <span className="text-cyan-400">{user.currency}</span></p>
+                <p className="text-2xl font-bold text-white">
+                  {user.balance} <span className="text-cyan-400">{user.currency}</span>
+                </p>
               </div>
             </div>
           </div>
@@ -189,10 +219,7 @@ const RapidLoanLanding: React.FC = () => {
             ))}
           </div>
 
-          <button
-            onClick={() => setShowAuth(false)}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold py-3 px-6 rounded-2xl"
-          >
+          <button onClick={() => setShowAuth(false)} className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold py-3 px-6 rounded-2xl">
             Solicitar Préstamo
           </button>
         </div>
@@ -200,22 +227,20 @@ const RapidLoanLanding: React.FC = () => {
     );
   }
 
+  // PUBLIC LANDING
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
-      <nav className={`fixed w-full z-50 transition-all duration-300 ${
-        scrolled ? 'bg-black/80 backdrop-blur-lg border-b border-blue-500/20' : 'bg-transparent'
-      }`}>
+      <nav
+        className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-black/80 backdrop-blur-lg border-b border-blue-500/20' : 'bg-transparent'}`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-lg"></div>
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-lg" />
               <span className="text-xl font-bold text-white">RapidLoan</span>
             </div>
-            
-            <button
-              onClick={() => setShowAuth(true)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-2 rounded-full font-semibold transition-all hover:scale-105"
-            >
+
+            <button onClick={() => setShowAuth(true)} className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-2 rounded-full font-semibold transition-all hover:scale-105">
               Acceder
             </button>
           </div>
@@ -227,20 +252,17 @@ const RapidLoanLanding: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="text-5xl md:text-7xl font-bold mb-6">
-                <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                  Préstamos
-                </span>
+                <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">Préstamos</span>
                 <br />
                 <span className="text-white">para Delivery</span>
               </h1>
-              
+
               <p className="text-xl text-gray-300 mb-8">
-                Obtén el financiamiento que necesitas para tu equipo de trabajo. 
-                <strong className="text-cyan-400"> Aprobación rápida, tasas justas.</strong> 
+                Obtén el financiamiento que necesitas para tu equipo de trabajo. <strong className="text-cyan-400">Aprobación rápida, tasas justas.</strong>
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <button 
+                <button
                   onClick={() => setShowAuth(true)}
                   className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-4 px-8 rounded-2xl transition-all hover:scale-105 shadow-2xl"
                 >
@@ -250,9 +272,9 @@ const RapidLoanLanding: React.FC = () => {
 
               <div className="grid grid-cols-3 gap-8 mt-12">
                 {[
-                  { number: "5min", label: "Aprobación" },
-                  { number: "2.5%", label: "Tasa Mensual" },
-                  { number: "24/7", label: "Disponible" }
+                  { number: '5min', label: 'Aprobación' },
+                  { number: '2.5%', label: 'Tasa Mensual' },
+                  { number: '24/7', label: 'Disponible' }
                 ].map((stat, index) => (
                   <div key={index} className="text-center">
                     <div className="text-2xl font-bold text-cyan-400">{stat.number}</div>
@@ -264,13 +286,9 @@ const RapidLoanLanding: React.FC = () => {
 
             <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl">
               <div className="text-center">
-                <div className="text-4xl mb-4">{features[currentFeature].icon}</div>
-                <h3 className="text-2xl font-bold text-white mb-4">
-                  {features[currentFeature].title}
-                </h3>
-                <p className="text-gray-300 text-lg">
-                  {features[currentFeature].description}
-                </p>
+                <div className="text-4xl mb-4">{FEATURES[currentFeature].icon}</div>
+                <h3 className="text-2xl font-bold text-white mb-4">{FEATURES[currentFeature].title}</h3>
+                <p className="text-gray-300 text-lg">{FEATURES[currentFeature].description}</p>
               </div>
             </div>
           </div>

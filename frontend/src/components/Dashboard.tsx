@@ -1,7 +1,9 @@
-import React from 'react';
+"use client";
+import React from "react";
+
 import PasskeyInfo from './PasskeyInfo';
-import LoanPanel from './LoanPanel';
-import AdvancedPasskey from './AdvancedPasskey';
+import LoanPanel from './LoansPanel';
+import AdvancedPasskey from './AdvancedPasskeyDemo';
 
 export default function Dashboard(): JSX.Element {
   return (

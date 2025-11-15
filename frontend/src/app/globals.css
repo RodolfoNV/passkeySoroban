@@ -2,5 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
-html,body,#__next { height: 100%; }
-body { background: #f8fafc; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+/* -----------------------------------
+   Estilos extra "bonitos" compatibles con Tailwind
+   (NO reemplazan clases de Tailwind)
+------------------------------------ */
+
+/* --- Fuente y suavizado --- */
+html, body {
+  @apply antialiased;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+/* -----------------------------------
+   Cards bonitas
+------------------------------------ */
+.card {
+  @apply rounded-2xl bg-white shadow-xl border border-slate-200 p-6;
+}
+
+/* Versión "glass" */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  @apply rounded-2xl p-6 shadow-2xl;
+}
+
+/* -----------------------------------
+   Botones Tailwind mejorados
+------------------------------------ */
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold px-4 py-2 transition-all shadow-md;
+}
+
+.btn-primary {
+  @apply bg-cyan-500 text-white hover:bg-cyan-600 active:scale-95;
+}
+
+.btn-outline {
+  @apply border border-white/40 text-white hover:bg-white/10 active:scale-95;
+}
+
+.btn-ghost {
+  @apply text-white/80 hover:text-white active:scale-95;
+}
+
+.btn-cta {
+  @apply text-lg px-6 py-3 font-bold rounded-2xl shadow-xl bg-gradient-to-r from-sky-400 to-cyan-500 text-white hover:opacity-90 active:scale-95;
+}
+
+/* -----------------------------------
+   Inputs modernos
+------------------------------------ */
+
+.input {
+  @apply w-full px-4 py-3 rounded-xl bg-white shadow-inner border border-slate-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-300 outline-none transition-all;
+}
+
+.input-dark {
+  @apply w-full px-4 py-3 rounded-xl bg-white/10 text-white border border-white/20 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-400 outline-none transition-all;
+}
+
+.label {
+  @apply block text-sm font-medium text-slate-600 mb-1;
+}
+
+/* -----------------------------------
+   Hero title con gradiente
+------------------------------------ */
+.hero-title {
+  @apply text-4xl md:text-6xl font-extrabold leading-tight;
+  background: linear-gradient(90deg, #60a5fa, #06b6d4, #3b82f6);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* -----------------------------------
+   Stats cards
+------------------------------------ */
+.stat {
+  @apply bg-white/70 backdrop-blur border border-slate-200 rounded-2xl p-4 shadow;
+}
+
+/* -----------------------------------
+   Modal / panel suave
+------------------------------------ */
+.modal {
+  @apply rounded-2xl shadow-2xl p-6 bg-white border border-slate-200;
+}
+
+/* -----------------------------------
+   Links
+------------------------------------ */
+a {
+  @apply transition-colors;
+}
+
+a:hover {
+  @apply opacity-80;
+}
+
+/* -----------------------------------
+   Header bonito semi-glass
+------------------------------------ */
+.header-glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  @apply border-b border-white/30 shadow;
+}

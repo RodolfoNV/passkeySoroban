@@ -1,3 +1,4 @@
+// src/lib/stellar.ts
 import { Server, Keypair, TransactionBuilder, Networks, Operation, Asset } from 'stellar-sdk';
 
 const HORIZON = process.env.NEXT_PUBLIC_HORIZON || 'https://horizon-testnet.stellar.org';

@@ -1,3 +1,4 @@
+// src/hooks/usePasskey.ts
 import { useState } from 'react';
 
 type UsePasskeyReturn = {
@@ -11,31 +12,29 @@ export default function usePasskey(): UsePasskeyReturn {
   const [isRegistered, setIsRegistered] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
 
-  async function registerPasskey() {
+  async function registerPasskey(): Promise<void> {
     setLastError(null);
-    if (!('credentials' in navigator) || !(navigator as any).credentials.create) {
+    if (typeof window === 'undefined' || !('credentials' in navigator) || !(navigator as any).credentials.create) {
       throw new Error('WebAuthn no soportado en este navegador');
     }
 
-    const challenge = crypto.getRandomValues(new Uint8Array(32));
-
-    const publicKey: PublicKeyCredentialCreationOptions = {
-      challenge: challenge.buffer,
-      rp: { name: 'Passkey Soroban Demo' },
-      user: {
-        id: Uint8Array.from(String(Date.now()), c => c.charCodeAt(0)),
-        name: 'user@example.com',
-        displayName: 'Demo User'
-      },
-      pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
-      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
-      timeout: 60000,
-      attestation: 'none'
-    };
-
     try {
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+      const publicKey: PublicKeyCredentialCreationOptions = {
+        challenge: challenge.buffer,
+        rp: { name: 'Passkey Soroban Demo' },
+        user: {
+          id: Uint8Array.from(String(Date.now()), (c) => c.charCodeAt(0)),
+          name: 'user@example.com',
+          displayName: 'Demo User'
+        },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+        timeout: 60000,
+        attestation: 'none'
+      };
       const cred = await (navigator as any).credentials.create({ publicKey });
-      console.log('credential', cred);
+      console.log('webauthn credential', cred);
       setIsRegistered(true);
     } catch (err: any) {
       setLastError(err?.message ?? String(err));
@@ -43,18 +42,17 @@ export default function usePasskey(): UsePasskeyReturn {
     }
   }
 
-  async function signIn() {
+  async function signIn(): Promise<void> {
     setLastError(null);
-    if (!('credentials' in navigator) || !(navigator as any).credentials.get) {
+    if (typeof window === 'undefined' || !('credentials' in navigator) || !(navigator as any).credentials.get) {
       throw new Error('WebAuthn no soportado en este navegador');
     }
 
-    const challenge = crypto.getRandomValues(new Uint8Array(32));
-    const opts: PublicKeyCredentialRequestOptions = { challenge: challenge.buffer, timeout: 60000, userVerification: 'required' };
-
     try {
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+      const opts: PublicKeyCredentialRequestOptions = { challenge: challenge.buffer, timeout: 60000, userVerification: 'required' };
       const assertion = await (navigator as any).credentials.get({ publicKey: opts });
-      console.log('assertion', assertion);
+      console.log('webauthn assertion', assertion);
       return;
     } catch (err: any) {
       setLastError(err?.message ?? String(err));

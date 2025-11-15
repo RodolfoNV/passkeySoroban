@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 import { Key, User, Bike, ArrowLeft, QrCode, Smartphone, Laptop } from 'lucide-react';
 
 interface AuthProps {
