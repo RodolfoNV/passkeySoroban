@@ -1,8 +1,5 @@
-"use client";
-
-import React from "react";
-import SorobanPasskeyApp from "@/components/SorobanPasskeyApp";
+import RapidLoanLanding from '../components/LandingPage';
 
 export default function Home() {
-  return <SorobanPasskeyApp />;
+  return <RapidLoanLanding />;
 }

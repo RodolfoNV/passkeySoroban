@@ -1,140 +1,218 @@
-"use client";
+'use client';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Key, User, Bike, ArrowLeft, QrCode, Smartphone, Laptop } from 'lucide-react';
 
-import { useState } from "react";
-import { usePasskey } from "@/hooks/usePasskey";
-import { useEffect } from "react";
-import { saveLocalKey, getLocalKey } from "../lib/webauthn";
-
-interface PasskeyAuthProps {
-  onLogin?: (username: string) => void;
+interface AuthProps {
+  onBack: () => void;
+  onLogin: (userData: any) => void;
 }
 
-export function PasskeyAuth({ onLogin }: PasskeyAuthProps) {
-  const [username, setUsername] = useState("");
-  const [status, setStatus] = useState<string>("");
-  const [localKey, setLocalKey] = useState<string | null>(null);
+const PasskeyAuth: React.FC<AuthProps> = ({ onBack, onLogin }) => {
+  const [isRegister, setIsRegister] = useState(false);
+  const [username, setUsername] = useState('');
+  const [vehicleType, setVehicleType] = useState('motorcycle');
+  const [showPasskeyOptions, setShowPasskeyOptions] = useState(false);
 
-  // Revisar si hay llave local guardada al cargar
-  useEffect(() => {
-    const key = getLocalKey();
-    if (key) {
-      setLocalKey(key);
-      setStatus("Llave local detectada. Puedes acceder sin autenticación externa.");
-    }
-  }, []);
-  const { isSupported, createPasskey, authenticate, isLoading, error } = usePasskey();
-
-  const handleRegister = async () => {
-    if (!username.trim()) {
-      setStatus("Por favor ingresa un usuario");
-      return;
-    }
-    setStatus("Creando passkey...");
-    const result = await createPasskey(username);
-    if (result.success) {
-      saveLocalKey(username);
-      setLocalKey(username);
-      setStatus("¡Listo! Acceso biométrico activado.");
-    } else {
-      setStatus(`Error: ${result.error}`);
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username.trim()) return;
+    
+    setShowPasskeyOptions(true);
   };
 
-  const handleAuthenticate = async () => {
-    setStatus("Autenticando...");
-    const result = await authenticate();
-    if (result.success) {
-      setStatus("");
-      if (onLogin) {
-        onLogin(result.userHandle || localKey || "");
-      }
-    } else {
-      setStatus(`Error: ${result.error}`);
-    }
+  const handlePasskeyCreation = (method: 'device' | 'qr' | 'mobile') => {
+    // Simular creación de passkey
+    setTimeout(() => {
+      const userData = {
+        id: '1',
+        name: username,
+        username: username,
+        role: 'borrower',
+        creditScore: 750,
+        vehicleType: vehicleType,
+        walletAddress: 'G' + Array(56).fill(0).map(() => 
+          'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]
+        ).join(''),
+        balance: '1,250.50',
+        currency: 'XLM'
+      };
+      onLogin(userData);
+    }, 2000);
   };
 
-  if (!isSupported) {
+  if (showPasskeyOptions) {
     return (
-      <div className="rounded-2xl p-8 bg-white/10 shadow-xl flex flex-col items-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-2xl font-bold mb-4 text-blue-900">
-            Passkeys no soportados
-          </h2>
-          <p className="leading-relaxed text-blue-700">
-            Tu navegador no soporta Passkeys/WebAuthn.<br/>Prueba con Chrome, Safari o Edge modernos.
-          </p>
-          <p className="text-sm mt-4 text-blue-400">
-            Usa HTTPS para máxima seguridad.
-          </p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl max-w-md w-full"
+        >
+          <div className="text-center mb-8">
+            <Key className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Crear Passkey
+            </h2>
+            <p className="text-gray-400">
+              Elige cómo quieres guardar tu passkey seguro
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <button
+              onClick={() => handlePasskeyCreation('device')}
+              className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-6 text-white transition-all duration-300 group"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                  <Laptop className="w-6 h-6 text-blue-400" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold">Guardar en este dispositivo</p>
+                  <p className="text-sm text-gray-400">Usar Windows Hello, Face ID, o huella</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => handlePasskeyCreation('qr')}
+              className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-6 text-white transition-all duration-300 group"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
+                  <QrCode className="w-6 h-6 text-green-400" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold">Código QR para móvil</p>
+                  <p className="text-sm text-gray-400">Escanear con tu teléfono</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => handlePasskeyCreation('mobile')}
+              className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-6 text-white transition-all duration-300 group"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
+                  <Smartphone className="w-6 h-6 text-purple-400" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold">Usar dispositivo móvil</p>
+                  <p className="text-sm text-gray-400">Continuar en tu teléfono</p>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <button
+            onClick={() => setShowPasskeyOptions(false)}
+            className="w-full text-gray-400 hover:text-white transition-colors mt-6"
+          >
+            ← Volver
+          </button>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl p-8 max-w-md mx-auto mt-8 shadow-2xl bg-black/80 backdrop-blur-md border border-green-700 flex flex-col items-center">
-      <div className="flex flex-col items-center w-full">
-        <div className="text-5xl mb-2 text-green-400">🔑</div>
-        <h2 className="text-2xl font-bold mb-2 text-green-300">Bienvenido</h2>
-        <p className="text-green-200 mb-6 text-center">Accede con tu usuario y activa tu passkey biométrica.<br/>Rápido, seguro y sin contraseñas.</p>
-        <input
-          type="text"
-          className="w-full px-4 py-2 rounded-lg border border-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 mb-4 bg-black/70 text-green-200 placeholder-green-400"
-          placeholder="Usuario"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          disabled={!!localKey}
-        />
-        <div className="flex flex-col gap-3 w-full">
-          {!localKey && (
-            <button
-              className="w-full py-2 rounded-lg bg-gradient-to-r from-green-600 to-blue-800 text-white font-bold shadow-md hover:from-green-700 hover:to-blue-900 transition-all"
-              onClick={handleRegister}
-              disabled={isLoading}
-            >
-              {isLoading ? "Creando..." : "Crear Passkey"}
-            </button>
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl max-w-md w-full"
+      >
+        <div className="flex items-center justify-between mb-8">
           <button
-            className="w-full py-2 rounded-lg bg-gradient-to-r from-blue-900 to-green-600 text-white font-bold shadow-md hover:from-blue-800 hover:to-green-700 transition-all"
-            onClick={handleAuthenticate}
-            disabled={isLoading || (!localKey && !username)}
+            onClick={onBack}
+            className="text-gray-400 hover:text-white transition-colors"
           >
-            {isLoading ? "Autenticando..." : localKey ? "Entrar con Passkey" : "Entrar"}
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
+              <Key className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-xl font-bold text-white">RapidLoan</span>
+          </div>
+        </div>
+
+        <div className="text-center mb-8">
+          <Key className="w-12 h-12 text-cyan-400 mx-auto mb-4" />
+          <h2 className="text-3xl font-bold text-white mb-2">
+            {isRegister ? 'Crear Cuenta' : 'Iniciar Sesión'}
+          </h2>
+          <p className="text-gray-400">
+            {isRegister ? 'Regístrate con passkey seguro' : 'Accede con tu passkey'}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Nombre de Usuario
+            </label>
+            <div className="relative">
+              <User className="w-5 h-5 text-gray-400 absolute left-3 top-3" />
+              <input
+                type="text"
+                required
+                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-white placeholder-gray-400 focus:border-cyan-400 focus:outline-none transition-colors"
+                placeholder="Tu nombre de usuario"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {isRegister && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Tipo de Vehículo
+              </label>
+              <div className="relative">
+                <Bike className="w-5 h-5 text-gray-400 absolute left-3 top-3" />
+                <select
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-white focus:border-cyan-400 focus:outline-none transition-colors appearance-none"
+                  value={vehicleType}
+                  onChange={(e) => setVehicleType(e.target.value)}
+                >
+                  <option value="motorcycle">Moto</option>
+                  <option value="bicycle">Bicicleta</option>
+                  <option value="electric_bike">Bicicleta Eléctrica</option>
+                  <option value="car">Automóvil</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
+          >
+            {isRegister ? 'Crear Passkey' : 'Usar Passkey'}
+          </button>
+        </form>
+
+        <div className="text-center mt-6">
+          <button
+            onClick={() => setIsRegister(!isRegister)}
+            className="text-cyan-400 hover:text-cyan-300 transition-colors"
+          >
+            {isRegister ? '¿Ya tienes cuenta? Inicia Sesión' : '¿No tienes cuenta? Regístrate'}
           </button>
         </div>
-        {status && (
-          <div className="mt-4 text-center text-green-400 font-medium animate-pulse">
-            {status}
-          </div>
-        )}
-      </div>
+
+        <div className="mt-8 p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+          <p className="text-sm text-blue-300 text-center">
+            🔒 <strong>Seguro:</strong> Tu passkey se guarda de forma encriptada en tu dispositivo
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
-}
+};
 
-function Spinner() {
-  return (
-    <svg
-      className="animate-spin h-5 w-5"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      ></circle>
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-      ></path>
-    </svg>
-  );
-}
+export default PasskeyAuth;

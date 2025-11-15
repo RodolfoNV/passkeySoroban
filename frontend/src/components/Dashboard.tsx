@@ -1,321 +1,269 @@
 'use client';
-
-import React, { useState, useEffect } from 'react';
-import { isFreighterAvailable, getFreighterPublicKey, openFreighterInstallPage } from '@/lib/wallets';
-
-interface PasskeyData {
-  credentialId: string;
-  publicKey: string;
-  accountAddress?: string;
-  deviceInfo?: string;
-  username?: string;
-}
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { User, DollarSign, Clock, CheckCircle, Plus, LogOut, Bike, Wallet, Copy, ExternalLink } from 'lucide-react';
 
 interface DashboardProps {
-  passkeyData: PasskeyData;
+  user: any;
   onLogout: () => void;
-  onAuthenticate?: () => void;
+  onRequestLoan: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ passkeyData, onLogout, onAuthenticate }) => {
-  const [copied, setCopied] = useState<string | null>(null);
-  const [walletPk, setWalletPk] = useState<string | null>(null);
-  const [walletAvailable, setWalletAvailable] = useState<boolean | null>(null);
+const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onRequestLoan }) => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    try {
-      const avail = isFreighterAvailable();
-      setWalletAvailable(avail);
-    } catch (e) {
-      setWalletAvailable(false);
-    }
-  }, []);
-
-  const copyToClipboard = (text: string, type: string) => {
+  const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    setCopied(type);
-    setTimeout(() => setCopied(null), 2000);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const shortenString = (str: string, length: number = 20) => {
-    if (str.length <= length) return str;
-    return `${str.slice(0, length / 2)}...${str.slice(-length / 2)}`;
-  };
+  const stats = [
+    { icon: <DollarSign className="w-6 h-6" />, label: 'Préstamo Actual', value: '$5,000 MXN' },
+    { icon: <Clock className="w-6 h-6" />, label: 'Próximo Pago', value: '15 Dic 2024' },
+    { icon: <CheckCircle className="w-6 h-6" />, label: 'Score Crediticio', value: user.creditScore },
+  ];
+
+  const recentLoans = [
+    { id: 1, amount: '$5,000', purpose: 'Moto de reparto', status: 'Activo', date: '01 Nov 2024' },
+    { id: 2, amount: '$2,500', purpose: 'Smartphone', status: 'Pagado', date: '15 Sep 2024' },
+  ];
 
   return (
-  <div className="relative min-h-screen bg-gradient-to-br from-black via-blue-900 to-green-900 text-white overflow-hidden">
-      {/* Header */}
-      <nav className="relative z-10 px-6 pt-6">
-        <div className="mx-auto max-w-6xl flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-xl">L</span>
-            </div>
-            <span className="font-bold text-xl text-blue-200">Logitec Dashboard</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 backdrop-blur-sm border border-white/20">
-              <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
-              <span className="text-blue-200 text-sm font-medium">Conectado</span>
-            </div>
-            {/* Freighter connect button */}
-            <div>
-              {walletAvailable ? (
-                walletPk ? (
-                  <div className="text-sm text-blue-200">
-                    Wallet: <code className="text-yellow-300">{shortenString(walletPk, 18)}</code>
-                  </div>
-                ) : (
-                  <button
-                    onClick={async () => {
-                      try {
-                        const pk = await getFreighterPublicKey();
-                        setWalletPk(pk || null);
-                      } catch (err) {
-                        // If freighter exists but call failed, show install/help
-                        console.warn('Freighter connect error', err);
-                        alert('No se pudo conectar con Freighter. Revisa la extensión o instala Freighter.');
-                      }
-                    }}
-                    className="px-3 py-1 bg-white/5 text-blue-200 rounded-md border border-white/10 hover:bg-white/10"
-                  >
-                    Conectar Freighter
-                  </button>
-                )
-              ) : (
-                <button
-                  onClick={() => openFreighterInstallPage()}
-                  className="px-3 py-1 bg-white/5 text-blue-200 rounded-md border border-white/10 hover:bg-white/10"
-                >
-                  Instalar Freighter
-                </button>
-              )}
-            </div>
-            <button
-              onClick={onLogout}
-              className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 hover:text-white rounded-lg backdrop-blur-sm border border-blue-500/30 transition-all duration-200 flex items-center space-x-2"
-            >
-              <span>Cerrar Sesión</span>
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <div className="relative z-10 px-6 pt-8">
-        <div className="mx-auto max-w-6xl">
-          {/* Welcome Section */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">
-              Bienvenido, <span className="text-blue-300 font-bold">{passkeyData.username || 'Usuario'}</span>
-            </h1>
-            <p className="text-[var(--muted-300)] text-lg">
-              Tu cuenta está protegida con autenticación avanzada Logitec
-            </p>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="glass rounded-2xl p-6 border border-[rgba(255,255,255,0.04)]">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-semibold" style={{ color: 'var(--foreground)' }}>Estado</h3>
-                  <p className="text-green-400 text-sm">Autenticado</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="glass rounded-2xl p-6 border border-[rgba(255,255,255,0.04)]">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-semibold" style={{ color: 'var(--foreground)' }}>Seguridad</h3>
-                  <p className="text-blue-300 text-sm">Biométrica</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="glass rounded-2xl p-6 border border-[rgba(255,255,255,0.04)]">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-semibold" style={{ color: 'var(--foreground)' }}>Red</h3>
-                  <p className="text-[var(--primary-500)] text-sm">Stellar</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Dashboard Grid */}
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Passkey Information */}
-            <div className="glass rounded-2xl p-8 border border-[rgba(255,255,255,0.04)]">
-              <h2 className="text-2xl font-bold text-white mb-6 flex items-center space-x-3">
-                <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 12H9l-4 4H2l1.5-1.5A6 6 0 017.257 9.243L9 7h3l4-4h3l-1.5 1.5z" />
-                </svg>
-                <span>Información del Passkey</span>
-              </h2>
-
-              <div className="space-y-6">
-                {/* Credential ID */}
-                <div>
-                  <label className="block text-gray-300 text-sm font-medium mb-2">ID de Credencial</label>
-                  <div className="flex items-center space-x-2">
-                    <div className="flex-1 bg-black/20 rounded-lg p-3 border border-white/10">
-                      <code className="text-green-400 text-sm break-all">
-                        {shortenString(passkeyData.credentialId)}
-                      </code>
-                    </div>
-                    <button
-                      onClick={() => copyToClipboard(passkeyData.credentialId, 'credential')}
-                      className="p-2 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg border border-purple-500/30 transition-colors"
-                    >
-                      {copied === 'credential' ? (
-                        <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Public Key */}
-                <div>
-                  <label className="block text-gray-300 text-sm font-medium mb-2">Clave Pública</label>
-                  <div className="flex items-center space-x-2">
-                    <div className="flex-1 bg-black/20 rounded-lg p-3 border border-white/10">
-                      <code className="text-blue-400 text-sm break-all">
-                        {shortenString(passkeyData.publicKey)}
-                      </code>
-                    </div>
-                    <button
-                      onClick={() => copyToClipboard(passkeyData.publicKey, 'publicKey')}
-                      className="p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg border border-blue-500/30 transition-colors"
-                    >
-                      {copied === 'publicKey' ? (
-                        <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Account Address */}
-                {passkeyData.accountAddress && (
-                  <div>
-                    <label className="block text-gray-300 text-sm font-medium mb-2">Dirección de Cuenta</label>
-                    <div className="flex items-center space-x-2">
-                      <div className="flex-1 bg-black/20 rounded-lg p-3 border border-white/10">
-                        <code className="text-yellow-400 text-sm break-all">
-                          {shortenString(passkeyData.accountAddress)}
-                        </code>
-                      </div>
-                      <button
-                        onClick={() => copyToClipboard(passkeyData.accountAddress!, 'address')}
-                        className="p-2 bg-yellow-500/20 hover:bg-yellow-500/30 rounded-lg border border-yellow-500/30 transition-colors"
-                      >
-                        {copied === 'address' ? (
-                          <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Actions Panel */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-              <h2 className="text-2xl font-bold mb-6 flex items-center space-x-3">
-                <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span>Acciones</span>
-              </h2>
-
-              <div className="space-y-4">
-                {/* Authenticate Button */}
-                {onAuthenticate && (
-                  <button
-                    onClick={onAuthenticate}
-                    className="w-full group relative px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-3"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Probar Autenticación</span>
-                  </button>
-                )}
-
-                {/* Info Cards */}
-                <div className="grid grid-cols-1 gap-4 mt-6">
-                  <div className="glass p-4 border border-[rgba(255,255,255,0.03)]">
-                    <div className="flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div>
-                        <h4 className="font-medium text-sm" style={{ color: 'var(--foreground)' }}>Información de Seguridad</h4>
-                              <p className="text-[var(--muted-300)] text-sm mt-1">
-                                Tu passkey está protegido por biometría y nunca sale de tu dispositivo.
-                              </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="glass p-4 border border-[rgba(255,255,255,0.03)]">
-                    <div className="flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-green-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div>
-                        <h4 className="font-medium text-sm" style={{ color: 'var(--foreground)' }}>Sesión Activa</h4>
-                              <p className="text-[var(--muted-300)] text-sm mt-1">
-                                Tu sesión se mantendrá activa mientras permanezcas en esta pestaña.
-                              </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 relative overflow-hidden">
+      {/* Fondo animado */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-cyan-900/20">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      {/* Background Decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse delay-1000"></div>
+      {/* Header */}
+      <header className="bg-black/30 backdrop-blur-lg border-b border-white/10 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
+                <Wallet className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-xl font-bold text-white">RapidLoan</span>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 text-white">
+                <User className="w-5 h-5" />
+                <span>{user.name}</span>
+              </div>
+              <button
+                onClick={onLogout}
+                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
+                title="Cerrar Sesión"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        {/* Welcome Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-3xl font-bold text-white mb-2">
+            ¡Bienvenido de vuelta, {user.name}! 🎉
+          </h1>
+          <p className="text-gray-400">Gestiona tus préstamos y tu wallet Stellar</p>
+        </motion.div>
+
+        {/* Wallet Stellar Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 backdrop-blur-lg rounded-2xl p-6 border border-cyan-400/20 mb-8"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-white flex items-center space-x-2">
+              <Wallet className="w-5 h-5 text-cyan-400" />
+              <span>Wallet Stellar</span>
+            </h3>
+            <span className="text-sm text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full">
+              Testnet
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-gray-400 text-sm mb-1">Dirección de Wallet</p>
+              <div className="flex items-center space-x-2">
+                <code className="text-white bg-black/30 px-3 py-2 rounded-lg text-sm font-mono flex-1">
+                  {user.walletAddress}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(user.walletAddress)}
+                  className="text-gray-400 hover:text-cyan-400 transition-colors p-2 hover:bg-white/10 rounded-lg"
+                  title="Copiar dirección"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+              {copied && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-green-400 text-sm mt-1"
+                >
+                  ¡Copiado al portapapeles!
+                </motion.p>
+              )}
+            </div>
+            
+            <div>
+              <p className="text-gray-400 text-sm mb-1">Balance</p>
+              <div className="flex items-center space-x-2">
+                <span className="text-2xl font-bold text-white">{user.balance}</span>
+                <span className="text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded text-sm">
+                  {user.currency}
+                </span>
+              </div>
+              <p className="text-gray-400 text-sm mt-1">≈ ${(parseFloat(user.balance.replace(',', '')) * 0.12).toFixed(2)} USD</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {stats.map((stat, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm">{stat.label}</p>
+                  <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
+                </div>
+                <div className="text-cyan-400">
+                  {stat.icon}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Resto del dashboard se mantiene igual... */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Quick Actions */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
+            >
+              <h3 className="text-xl font-bold text-white mb-4">Acciones Rápidas</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  onClick={onRequestLoan}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span>Solicitar Préstamo</span>
+                </button>
+                <button className="bg-white/10 hover:bg-white/20 text-white font-semibold py-4 px-6 rounded-2xl transition-all duration-300 border border-white/10 flex items-center justify-center space-x-2">
+                  <DollarSign className="w-5 h-5" />
+                  <span>Realizar Pago</span>
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Recent Loans */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
+            >
+              <h3 className="text-xl font-bold text-white mb-4">Préstamos Recientes</h3>
+              <div className="space-y-4">
+                {recentLoans.map((loan) => (
+                  <div key={loan.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl">
+                    <div className="flex items-center space-x-4">
+                      <Bike className="w-8 h-8 text-cyan-400" />
+                      <div>
+                        <p className="text-white font-semibold">{loan.purpose}</p>
+                        <p className="text-gray-400 text-sm">{loan.amount} • {loan.date}</p>
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                      loan.status === 'Activo' 
+                        ? 'bg-green-500/20 text-green-400' 
+                        : 'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {loan.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Right Column - Profile */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="space-y-6"
+          >
+            {/* Profile Card */}
+            <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
+              <h3 className="text-xl font-bold text-white mb-4">Tu Perfil</h3>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <User className="w-5 h-5 text-cyan-400" />
+                  <div>
+                    <p className="text-white font-semibold">{user.name}</p>
+                    <p className="text-gray-400 text-sm">@{user.username}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Bike className="w-5 h-5 text-cyan-400" />
+                  <div>
+                    <p className="text-white font-semibold capitalize">
+                      {user.vehicleType?.replace('_', ' ') || 'Moto'}
+                    </p>
+                    <p className="text-gray-400 text-sm">Vehículo</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="w-5 h-5 text-cyan-400" />
+                  <div>
+                    <p className="text-white font-semibold">Score: {user.creditScore}</p>
+                    <p className="text-gray-400 text-sm">Excelente</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Tips */}
+            <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 backdrop-blur-lg rounded-2xl p-6 border border-cyan-400/20">
+              <h4 className="text-lg font-bold text-white mb-3">💡 Consejos Rápidos</h4>
+              <ul className="text-cyan-300 text-sm space-y-2">
+                <li>• Realiza pagos a tiempo para mejorar tu score</li>
+                <li>• Mantén tu información actualizada</li>
+                <li>• Revisa las tasas antes de solicitar</li>
+                <li>• Tu wallet Stellar está lista para usar</li>
+              </ul>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

@@ -1,25 +1,19 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import './globals.css';
 
-export const metadata: Metadata = {
-  title: "Logitec",
-  description: "Passwordless authentication with Passkeys on Stellar/Soroban",
-  icons: {
-    icon: "/favicon.ico",
-  },
+export const metadata = {
+  title: 'RapidLoan - Préstamos para Delivery',
+  description: 'Plataforma de préstamos descentralizados para trabajadores de delivery',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body className="antialiased min-h-screen" style={{ background: 'var(--background)', color: 'var(--foreground)', fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}>
-        <div className="min-h-screen max-w-6xl mx-auto px-4 py-6">
-          {children}
-        </div>
+    <html lang="es">
+      <body className="antialiased">
+        {children}
       </body>
     </html>
   );

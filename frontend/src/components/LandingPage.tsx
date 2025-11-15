@@ -1,127 +1,283 @@
 'use client';
+import React, { useState, useEffect } from 'react';
 
-import React from 'react';
+const RapidLoanLanding: React.FC = () => {
+  const [currentFeature, setCurrentFeature] = useState<number>(0);
+  const [scrolled, setScrolled] = useState<boolean>(false);
+  const [showAuth, setShowAuth] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
-interface LandingPageProps {
-  onStartSession: () => void;
-}
+  const features = [
+    {
+      icon: '🏍️',
+      title: "Préstamos para Vehículos",
+      description: "Financia tu moto, bicicleta eléctrica o equipo de reparto"
+    },
+    {
+      icon: '📱',
+      title: "Tecnología Móvil", 
+      description: "Adquiere smartphones, power banks y accesorios esenciales"
+    },
+    {
+      icon: '⚡',
+      title: "Aprobación Inmediata",
+      description: "Respuesta en minutos con tecnología blockchain Stellar"
+    },
+    {
+      icon: '🛡️',
+      title: "Totalmente Seguro",
+      description: "Tus datos protegidos con passkeys y smart contracts"
+    }
+  ];
 
-const LandingPage: React.FC<LandingPageProps> = ({ onStartSession }) => {
-  const [logueado, setLogueado] = React.useState(() => {
-    // Persistencia de sesión
-    return !!localStorage.getItem('usuario');
-  });
-  const [usuario, setUsuario] = React.useState(() => localStorage.getItem('usuario') || "");
-  const [wallet, setWallet] = React.useState("");
-  const [showWelcome, setShowWelcome] = React.useState(false);
+  const benefits = [
+    "Sin papeleos complicados",
+    "Tasas competitivas", 
+    "Plazos flexibles",
+    "Desembolsos rápidos",
+    "Soporte 24/7",
+    "Sin comisiones ocultas"
+  ];
 
-  // Simulación: al loguear, se recibe el usuario y wallet
-  const handleLogin = (user: string) => {
-    setUsuario(user);
-    setWallet("GABCD1234WALLETEXAMPLE"); // Aquí iría la lógica real para obtener la wallet
-    setLogueado(true);
-    localStorage.setItem('usuario', user);
-    setShowWelcome(true);
-    setTimeout(() => setShowWelcome(false), 2500);
+  useEffect(() => {
+    const savedUser = localStorage.getItem('rapidloan_user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+
+    const handleScroll = () => setScrolled(window.scrollY > 100);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentFeature((prev) => (prev + 1) % features.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [features.length]);
+
+  const handleLogin = (userData: any) => {
+    setUser(userData);
+    localStorage.setItem('rapidloan_user', JSON.stringify(userData));
+    setShowAuth(false);
   };
 
   const handleLogout = () => {
-    setLogueado(false);
-    setUsuario("");
-    setWallet("");
-    localStorage.removeItem('usuario');
+    setUser(null);
+    localStorage.removeItem('rapidloan_user');
   };
 
-  return (
-    <main className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-700 via-blue-500 to-blue-300">
-      <section className="w-full h-full flex flex-col items-center justify-center p-0 m-0">
-        <h1 className="text-6xl font-extrabold text-center mb-6 text-blue-100 tracking-tight drop-shadow-lg">Logitec Passkey</h1>
-        <p className="text-xl text-center mb-8 text-blue-200 font-medium">Autenticación avanzada con passkeys y Soroban.<br/>Seguridad y simplicidad para tu acceso digital.</p>
-        {/* PasskeyAuth: Registro/Login o Interfaz de Dashboard+Préstamos */}
-        <div className="mb-12 flex justify-center w-full">
-          {!logueado ? (
-            <PasskeyAuth onLogin={handleLogin} />
-          ) : (
-            <div className="w-full flex flex-col gap-8">
-              {showWelcome && (
-                <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-green-500/90 text-white px-6 py-3 rounded-xl shadow-lg z-50 animate-fade-in">
-                  ¡Bienvenido, {usuario}!
-                </div>
-              )}
-              <div className="mb-8">
-                <div className="flex justify-end mb-4">
-                  <button
-                    onClick={handleLogout}
-                    className="px-4 py-2 bg-blue-500/80 hover:bg-blue-700 text-white rounded-lg shadow transition-all"
-                  >
-                    Cerrar sesión
-                  </button>
-                </div>
-                {/* Dashboard de usuario autenticado */}
-                <div className="mb-8">
-                  <h2 className="text-3xl font-bold text-blue-900 mb-2">Panel General</h2>
-                  <div className="grid md:grid-cols-2 gap-8">
-                    <div className="bg-white/80 rounded-2xl p-6 shadow-lg">
-                      <div className="text-lg font-semibold text-blue-800 mb-2">Usuario</div>
-                      <div className="text-blue-600 font-mono mb-2">{usuario}</div>
-                      <div className="text-xs text-gray-500">Wallet:</div>
-                      <div className="text-purple-700 font-mono break-all">{wallet}</div>
-                    </div>
-                    <div className="bg-white/80 rounded-2xl p-6 shadow-lg">
-                      <div className="text-lg font-semibold text-blue-800 mb-2">Estado</div>
-                      <div className="text-green-600 font-bold">Autenticado</div>
-                      <div className="text-xs text-gray-500 mt-2">Biométrico / Passkey</div>
-                    </div>
-                  </div>
-                </div>
-                {/* Panel de préstamos y recibos */}
-                <div className="mt-8">
-                  <Prestamo usuario={usuario} wallet={wallet} />
-                </div>
-              </div>
+  if (showAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center p-4">
+        <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl max-w-md w-full">
+          <div className="text-center mb-8">
+            <div className="text-4xl mb-4">🔑</div>
+            <h2 className="text-3xl font-bold text-white mb-2">Acceder</h2>
+            <p className="text-gray-400">Usa tu passkey seguro</p>
+          </div>
+          
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handleLogin({
+              id: '1',
+              name: 'Usuario Demo',
+              username: 'demo',
+              creditScore: 750,
+              walletAddress: 'G' + Array(56).fill(0).map(() => 
+                'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]
+              ).join(''),
+              balance: '1,250.50',
+              currency: 'XLM'
+            });
+          }} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Nombre de Usuario
+              </label>
+              <input
+                type="text"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:border-cyan-400 focus:outline-none transition-colors"
+                placeholder="Tu nombre de usuario"
+              />
             </div>
-          )}
+
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
+            >
+              Usar Passkey
+            </button>
+          </form>
+
+          <div className="mt-8 p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+            <p className="text-sm text-blue-300 text-center">
+              💡 <strong>Demo:</strong> Cualquier usuario funciona
+            </p>
+          </div>
+          
+          <button
+            onClick={() => setShowAuth(false)}
+            className="w-full text-gray-400 hover:text-white transition-colors mt-4"
+          >
+            ← Volver al inicio
+          </button>
         </div>
-        {/* Technology Section */}
-        <div className="mx-auto max-w-4xl text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-8">Powered by <span className="text-purple-400">Cutting-Edge Technology</span></h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="flex flex-col items-center space-y-3 group">
-              <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center group-hover:bg-white/20 transition-all">
-                <span className="text-2xl text-white">WebAuthn</span>
+      </div>
+    );
+  }
+
+  if (user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+        <header className="bg-black/30 backdrop-blur-lg border-b border-white/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-lg"></div>
+                <span className="text-xl font-bold text-white">RapidLoan</span>
               </div>
-              <span className="text-gray-300 font-medium">WebAuthn</span>
+              
+              <div className="flex items-center space-x-4">
+                <span className="text-white">Hola, {user.name}</span>
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  Salir
+                </button>
+              </div>
             </div>
-            <div className="flex flex-col items-center space-y-3 group">
-              <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center group-hover:bg-white/20 transition-all">
-                <span className="text-2xl text-white">Stellar</span>
+          </div>
+        </header>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-white mb-2">
+              ¡Bienvenido, {user.name}! 🎉
+            </h1>
+            <p className="text-gray-400">Tu wallet Stellar está lista</p>
+          </div>
+
+          <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 backdrop-blur-lg rounded-2xl p-6 border border-cyan-400/20 mb-8">
+            <h3 className="text-xl font-bold text-white mb-4">💰 Wallet Stellar</h3>
+            <div className="space-y-4">
+              <div>
+                <p className="text-gray-400 text-sm">Dirección:</p>
+                <code className="text-white bg-black/30 px-3 py-2 rounded-lg text-sm font-mono">
+                  {user.walletAddress}
+                </code>
               </div>
-              <span className="text-gray-300 font-medium">Stellar</span>
+              <div>
+                <p className="text-gray-400 text-sm">Balance:</p>
+                <p className="text-2xl font-bold text-white">{user.balance} <span className="text-cyan-400">{user.currency}</span></p>
+              </div>
             </div>
-            <div className="flex flex-col items-center space-y-3 group">
-              <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center group-hover:bg-white/20 transition-all">
-                <span className="text-2xl text-white">Soroban</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {[
+              { label: 'Préstamo Actual', value: '$5,000 MXN' },
+              { label: 'Próximo Pago', value: '15 Dic 2024' },
+              { label: 'Score Crediticio', value: user.creditScore }
+            ].map((stat, index) => (
+              <div key={index} className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
+                <p className="text-gray-400 text-sm">{stat.label}</p>
+                <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
               </div>
-              <span className="text-gray-300 font-medium">Soroban</span>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setShowAuth(false)}
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold py-3 px-6 rounded-2xl"
+          >
+            Solicitar Préstamo
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+      <nav className={`fixed w-full z-50 transition-all duration-300 ${
+        scrolled ? 'bg-black/80 backdrop-blur-lg border-b border-blue-500/20' : 'bg-transparent'
+      }`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-lg"></div>
+              <span className="text-xl font-bold text-white">RapidLoan</span>
             </div>
-            <div className="flex flex-col items-center space-y-3 group">
-              <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center group-hover:bg-white/20 transition-all">
-                <span className="text-2xl text-white">Biometric</span>
+            
+            <button
+              onClick={() => setShowAuth(true)}
+              className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-2 rounded-full font-semibold transition-all hover:scale-105"
+            >
+              Acceder
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <section className="pt-32 pb-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="text-5xl md:text-7xl font-bold mb-6">
+                <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                  Préstamos
+                </span>
+                <br />
+                <span className="text-white">para Delivery</span>
+              </h1>
+              
+              <p className="text-xl text-gray-300 mb-8">
+                Obtén el financiamiento que necesitas para tu equipo de trabajo. 
+                <strong className="text-cyan-400"> Aprobación rápida, tasas justas.</strong> 
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button 
+                  onClick={() => setShowAuth(true)}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-4 px-8 rounded-2xl transition-all hover:scale-105 shadow-2xl"
+                >
+                  Comenzar Ahora →
+                </button>
               </div>
-              <span className="text-gray-300 font-medium">Biometric</span>
+
+              <div className="grid grid-cols-3 gap-8 mt-12">
+                {[
+                  { number: "5min", label: "Aprobación" },
+                  { number: "2.5%", label: "Tasa Mensual" },
+                  { number: "24/7", label: "Disponible" }
+                ].map((stat, index) => (
+                  <div key={index} className="text-center">
+                    <div className="text-2xl font-bold text-cyan-400">{stat.number}</div>
+                    <div className="text-sm text-gray-400">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl">
+              <div className="text-center">
+                <div className="text-4xl mb-4">{features[currentFeature].icon}</div>
+                <h3 className="text-2xl font-bold text-white mb-4">
+                  {features[currentFeature].title}
+                </h3>
+                <p className="text-gray-300 text-lg">
+                  {features[currentFeature].description}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
-      {/* Background Decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse delay-500"></div>
-      </div>
-    </main>
+    </div>
   );
-}
-import { PasskeyAuth } from "./PasskeyAuth";
-import Prestamo from "./Prestamo";
-export default LandingPage;
+};
+
+export default RapidLoanLanding;

@@ -3,68 +3,54 @@
 @tailwind utilities;
 
 :root {
-  /* Nueva paleta: eléctrico/neón */
-  --background: linear-gradient(180deg, #050816 0%, #071034 100%);
-  --foreground: #e6f7ff;
-  --primary-500: #7c3aed; /* violet */
-  --primary-600: #4f46e5;
-  --accent-400: #00d4ff; /* cyan neon */
-  --accent-600: #00bcd4;
-  --muted-300: #94a3b8;
-  --glass-bg: rgba(255,255,255,0.03);
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 15, 23, 42;
+  --background-end-rgb: 30, 41, 59;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: linear-gradient(180deg, #010417 0%, #06102b 100%);
-    --foreground: #e6f7fb;
-    --primary-500: #7c3aed;
-    --primary-600: #4f46e5;
-    --accent-400: #00d4ff;
-    --glass-bg: rgba(255,255,255,0.03);
-  }
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  height: 100%;
 }
 
 body {
-  color: var(--foreground);
-  background: linear-gradient(180deg, var(--background) 0%, rgba(246,251,255,0.8) 100%);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom right,
+      rgb(var(--background-start-rgb)),
+      rgb(var(--background-end-rgb))
+    );
+  min-height: 100vh;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
-/* Custom animations for passkey interactions */
-@keyframes fingerprint-scan {
-  0%, 100% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.fingerprint-scan {
-  animation: fingerprint-scan 2s ease-in-out infinite;
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.8);
 }
 
-/* Glassmorphism effect */
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(8px) saturate(120%);
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 8px 30px rgba(2,6,23,0.25);
+::-webkit-scrollbar-thumb {
+  background: #06b6d4;
+  border-radius: 4px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .glass {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: #0891b2;
 }
